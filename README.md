@@ -1,4 +1,4 @@
-# puchalski
+# puchalski-v2
 
 ## Project setup
 ```
