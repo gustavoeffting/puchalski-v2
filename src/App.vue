@@ -10,7 +10,7 @@
           </v-row>
           <v-row align="center" justify="center" class="pt-4" no-gutters>
             <v-col cols="12" sm="8">
-              <search-box :comboboxItems="items" @set-address="setAddress"></search-box>
+              <search-box :comboboxItems="items" @set-address="setAddress" />
             </v-col>
             <v-col cols="12" sm="2">
               <v-btn

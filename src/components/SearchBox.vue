@@ -1,9 +1,7 @@
 <template>
   <v-combobox
     ref="searchCombobox"
-    v-model="addressDummyModel"
-    @change="onAutoCompleteSelection"
-    @keyup="customOnChangeHandler"
+    @keypress="customOnChangeHandler"
     @paste="customOnChangeHandler"
     :items="comboboxItems"
     label="Digite um local"
@@ -14,9 +12,6 @@
 <script>
 export default {
   name: "SearchBox",
-  data: () => ({
-    addressDummyModel: null,
-  }),
   props: {
     comboboxItems: {
       type: Array,
@@ -24,15 +19,8 @@ export default {
     }
   },
   methods: {
-    onAutoCompleteSelection () {
-      this.$emit("set-address", this.addressDummyModel)
-    },
     customOnChangeHandler () {
-      setTimeout (() => {
-        if (this.$refs.searchCombobox) {
-          this.$emit("set-address", this.$refs.searchCombobox.internalSearch)
-        }
-      });
+      this.$emit("set-address", this.$refs.searchCombobox.internalSearch)
     },
   }
 }
