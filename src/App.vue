@@ -63,7 +63,7 @@
 </template>
 
 <script>
-import { getWeather, getLocation } from "./services.js"
+import { getWeather, getForecast, getLocation } from "./services.js"
 export default {
   name: 'App',
   components: {
@@ -177,23 +177,20 @@ export default {
       }
 
       if (findCacheForecast === false) {
-        const data = await getWeather(lat, lng)
-        const forecast = []
+        const data = await getForecast(lat, lng)
 
         const forecastList = data.list.filter( element => {
-          return element.dt_txt.substring(11,13) === '12' // weather at 12h
+          return new Date(element.dt * 1000).getHours() === 9 // weather at 12h
         })
 
-        let i = 0
-        for (let item of forecastList) {
-          forecast.push({
-                          'id': i, 
-                          'date': item.dt_txt.substring(8,10) + '/' + item.dt_txt.substring(5,7),
-                          'weather': item.weather[0].description,
-                          'temperature': Math.round(item.main.temp)
-                        })
-          i++
-        }
+        const forecast = forecastList.map((item, idx) => {
+          return {
+            id: idx,
+            date: item.dt_txt.substring(8,10) + '/' + item.dt_txt.substring(5,7),
+            weather: item.weather[0].description,
+            temperature: Math.round(item.main.temp)
+          }
+        })
 
         this.forecast = forecast
 
