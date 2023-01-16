@@ -88,7 +88,7 @@ export default {
   },
   methods: {
     async getLocationInfo () {
-      if (!this.address.trim()) {
+      if (!this.address || !this.address.trim()) {
         return
       }
 
