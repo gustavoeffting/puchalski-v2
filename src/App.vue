@@ -103,6 +103,7 @@ export default {
 
       if (storedCoordinate) {
         this.getWeatherInfo(storedCoordinate.lat, storedCoordinate.lng)
+        this.getForecastInfo(storedCoordinate.lat, storedCoordinate.lng)
       } else {
         const { results } = await getLocation(this.address)
         if (results.length === 0) {
@@ -120,39 +121,29 @@ export default {
         localStorage.setItem('storedCoordinatesList', JSON.stringify(storedCoordinatesList))
 
         this.getWeatherInfo(results[0].geometry.location.lat,results[0].geometry.location.lng)
+        this.getForecastInfo(results[0].geometry.location.lat,results[0].geometry.location.lng)
       }
     },
     async getWeatherInfo (lat, lng) {
-      const today = new Date()
-      const dd = String(today.getDate()).padStart(2, '0')
-      const mm = String(today.getMonth() + 1).padStart(2, '0')
-      const year = String(today.getYear())
-      this.currentDate = dd + '/' + mm
+      const currentDateHour = this.getCurrentDateTime()
+      this.currentDate = currentDateHour.currentDate
 
-      const currentHour = dd + '/' + mm + '/' + year + ' - ' + today.getHours()
+      const storedWeathersList = JSON.parse(sessionStorage.getItem('storedWeathersList')) ? JSON.parse(sessionStorage.getItem('storedWeathersList')) : []
 
-      const storedWeather = JSON.parse(sessionStorage.getItem('storedWeather')) ? JSON.parse(sessionStorage.getItem('storedWeather')) : []
-      let findCacheWeather = false
+      const storedWeather = storedWeathersList.find((item) => item.lastQuery === currentDateHour.currentHour && item.lat === lat && item.lng === lng)
 
       if (storedWeather) {
-        storedWeather.forEach((item) => {
-          if (item.lastQuery == currentHour && item.lat == lat && item.lng == lng) {
-            this.temperature = item.temperature
-            this.weather = item.weather
-            this.location = item.location
-            findCacheWeather = true
-          }
-        })
-      }
-
-      if (findCacheWeather === false) {
+        this.location = storedWeather.location
+        this.temperature = storedWeather.temperature
+        this.weather = storedWeather.weather
+      } else {
         const data = await getWeather(lat,lng)
+        this.location = data.name
         this.temperature = Math.round(data.main.temp)
         this.weather = data.weather[0].description
-        this.location = data.name
 
         const weatherInfo = {
-          "lastQuery": currentHour,
+          "lastQuery": currentDateHour.currentHour,
           "temperature": Math.round(data.main.temp),
           "weather": data.weather[0].description,
           "location": data.name,
@@ -160,49 +151,57 @@ export default {
           "lng": lng
         }
 
-        storedWeather.push(weatherInfo)
-        sessionStorage.setItem('storedWeather', JSON.stringify(storedWeather))
+        storedWeathersList.push(weatherInfo)
+        sessionStorage.setItem('storedWeathersList', JSON.stringify(storedWeathersList))
       }
+    },
+    async getForecastInfo(lat, lng) {
+      const currentDateHour = this.getCurrentDateTime()
+      const storedForecastsList = JSON.parse(sessionStorage.getItem('storedForecastsList')) ? JSON.parse(sessionStorage.getItem('storedForecastsList')) : []
 
-      const storedForecast = JSON.parse(sessionStorage.getItem('storedForecast')) ? JSON.parse(sessionStorage.getItem('storedForecast')) : []
-      let findCacheForecast = false
-
+      const storedForecast = storedForecastsList.find((item) => item.lastQuery === currentDateHour.currentHour && item.lat === lat && item.lng === lng)
       if (storedForecast) {
-        storedForecast.forEach((item) => {
-          if (item.lastQuery == currentHour && item.lat == lat && item.lng == lng) {
-            this.forecast = item.forecast
-            findCacheForecast = true
-          }
-        })
+        this.forecast = storedForecast.forecast
+        return
       }
 
-      if (findCacheForecast === false) {
-        const data = await getForecast(lat, lng)
+      const data = await getForecast(lat, lng)
 
-        const forecastList = data.list.filter( element => {
-          return new Date(element.dt * 1000).getHours() === 9 // weather at 12h
-        })
+      const forecastList = data.list.filter(element => {
+        //TODO: make sure this is correct
+        return new Date(element.dt * 1000).getHours() === 9 // weather at 12h
+      })
 
-        const forecast = forecastList.map((item, idx) => {
-          return {
-            id: idx,
-            date: item.dt_txt.substring(8,10) + '/' + item.dt_txt.substring(5,7),
-            weather: item.weather[0].description,
-            temperature: Math.round(item.main.temp)
-          }
-        })
-
-        this.forecast = forecast
-
-        const forecastInfo = {
-          "lastQuery": currentHour,
-          "lat": lat,
-          "lng": lng,
-          "forecast": forecast
+      const forecast = forecastList.map((item, idx) => {
+        return {
+          id: idx,
+          date: item.dt_txt.substring(8,10) + '/' + item.dt_txt.substring(5,7),
+          weather: item.weather[0].description,
+          temperature: Math.round(item.main.temp)
         }
+      })
 
-        storedForecast.push(forecastInfo)
-        sessionStorage.setItem('storedForecast', JSON.stringify(storedForecast))
+      this.forecast = forecast
+
+      const forecastInfo = {
+        "lastQuery": currentDateHour.currentHour,
+        "lat": lat,
+        "lng": lng,
+        "forecast": forecast
+      }
+
+      storedForecastsList.push(forecastInfo)
+      sessionStorage.setItem('storedForecastsList', JSON.stringify(storedForecastsList))
+    },
+    getCurrentDateTime() {
+      const today = new Date()
+      const dd = String(today.getDate()).padStart(2, '0')
+      const mm = String(today.getMonth() + 1).padStart(2, '0')
+      const year = String(today.getYear())
+
+      return {
+        currentDate: dd + '/' + mm,
+        currentHour: dd + '/' + mm + '/' + year + ' - ' + today.getHours()
       }
     },
     setAddress(address) {
