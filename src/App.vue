@@ -47,6 +47,7 @@
 </template>
 
 <script>
+import { DateTime } from "luxon"
 import { getWeather, getForecast, getLocation } from "./services.js"
 export default {
   name: 'App',
@@ -129,11 +130,11 @@ export default {
 
         const weatherInfo = {
           "lastQuery": currentDateHour.currentHour,
+          "lat": lat,
+          "lng": lng,
+          "location": data.name,
           "temperature": Math.round(data.main.temp),
           "weather": data.weather[0].description,
-          "location": data.name,
-          "lat": lat,
-          "lng": lng
         }
 
         storedWeathersList.push(weatherInfo)
@@ -153,14 +154,13 @@ export default {
       const data = await getForecast(lat, lng)
 
       const forecastList = data.list.filter(element => {
-        //TODO: make sure this is correct
-        return new Date(element.dt * 1000).getHours() === 9 // weather at 12h
+        return DateTime.fromISO(new Date(element.dt_txt).toISOString()).hour === 12 // weather at 12h
       })
 
       const forecast = forecastList.map((item, idx) => {
         return {
           id: idx,
-          date: item.dt_txt.substring(8,10) + '/' + item.dt_txt.substring(5,7),
+          date: DateTime.fromISO(new Date(item.dt_txt).toISOString()).toFormat('dd/MM'),
           weather: item.weather[0].description,
           temperature: Math.round(item.main.temp)
         }
@@ -179,14 +179,11 @@ export default {
       sessionStorage.setItem('storedForecastsList', JSON.stringify(storedForecastsList))
     },
     getCurrentDateTime() {
-      const today = new Date()
-      const dd = String(today.getDate()).padStart(2, '0')
-      const mm = String(today.getMonth() + 1).padStart(2, '0')
-      const year = String(today.getYear())
+      const dt = DateTime.now();
 
       return {
-        currentDate: dd + '/' + mm,
-        currentHour: dd + '/' + mm + '/' + year + ' - ' + today.getHours()
+        currentDate: dt.toFormat('dd/MM'),
+        currentHour: dt.toFormat('dd/MM/YYYY - HH')
       }
     },
     setAddress(address) {
