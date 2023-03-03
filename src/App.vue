@@ -16,10 +16,10 @@
               <v-btn
                 @click="getLocationInfo"
                 class="btn-search"
+                color="#1e1559"
+                elevation="2"
                 outlined
                 x-large
-                elevation="2"
-                color="#1e1559"
               >
                 Buscar
               </v-btn>
@@ -56,13 +56,13 @@ export default {
   },
   data: () => ({
     address: null,
-    temperature: null,
-    weather: null,
-    location: null,
+    comboBoxModel: null,
     currentDate: null,
     forecast: [],
-    comboBoxModel: null,
-    items: []
+    items: [],
+    location: null,
+    temperature: null,
+    weather: null
   }),
   mounted () {
     const storedSearches = JSON.parse(localStorage.getItem('storedSearches'))
