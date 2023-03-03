@@ -1,5 +1,7 @@
 # puchalski-v2
 
+An app to check the weather status. Live on https://precious-lily-856723.netlify.app/
+
 ## Project setup
 ```
 npm install
