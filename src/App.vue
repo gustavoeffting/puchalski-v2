@@ -1,16 +1,16 @@
 <template>
   <v-app id="main-content">
     <v-container>
-      <v-row :class="[temperature ? '' : 'home']" align="center" no-gutters>
+      <v-row :class="[latitude && longitude ? '' : 'home']" align="center" no-gutters>
         <v-col>
-          <v-row v-if="!temperature" no-gutters>
+          <v-row v-if="!latitude || !longitude" no-gutters>
             <v-col cols="12">
               <span class="fs-35 block text-center">Previsão do tempo</span>
             </v-col>
           </v-row>
           <v-row align="center" justify="center" class="pt-4" no-gutters>
             <v-col cols="12" sm="8">
-              <search-box :comboboxItems="items" @set-address="setAddress" />
+              <search-box :comboboxItems="items" :loading="loading" @set-address="setAddress" />
             </v-col>
             <v-col cols="12" sm="2">
               <v-btn
@@ -18,6 +18,7 @@
                 class="btn-search"
                 color="#1e1559"
                 elevation="2"
+                :loading="loading"
                 outlined
                 x-large
               >
@@ -25,21 +26,12 @@
               </v-btn>
             </v-col>
           </v-row>
-        </v-col>
-      </v-row>
-      <v-row v-if="temperature" no-gutters>
-        <v-col cols="12">
-          <v-row class="mb-10" no-gutters>
+          <v-row v-if="latitude && longitude" no-gutters>
             <v-col cols="12">
-              <div>
-                <span class="fs-100 block text-center"><b> {{ temperature }}°C </b></span>
-                <span class="fs-25 block text-center"><b> {{ weather }} </b></span>
-                <span class="fs-25 block text-center"> {{ location }} </span>
-                <span class="fs-25 block text-center"> {{ currentDate }} </span>
-              </div>
+              <weather-info :coordinates="coordinates" />
+              <forecast-table :coordinates="coordinates" />
             </v-col>
           </v-row>
-          <forecast-table :forecast="forecast" />
         </v-col>
       </v-row>
     </v-container>
@@ -47,24 +39,28 @@
 </template>
 
 <script>
-import { DateTime } from "luxon"
-import { getWeather, getForecast, getLocation } from "./services.js"
+import { getLocation } from "./services.js"
 export default {
   name: 'App',
   components: {
     ForecastTable: () => import("./components/ForecastTable.vue"),
-    SearchBox: () => import("./components/SearchBox.vue")
+    SearchBox: () => import("./components/SearchBox.vue"),
+    WeatherInfo: () => import("./components/WeatherInfo.vue")
   },
   data: () => ({
     address: null,
     comboBoxModel: null,
     currentDate: null,
-    forecast: [],
     items: [],
-    location: null,
-    temperature: null,
-    weather: null
+    latitude: null,
+    longitude: null,
+    loading: false,
   }),
+  computed: {
+    coordinates() {
+      return { lat: this.latitude, lng: this.longitude }
+    }
+  },
   mounted () {
     const storedSearches = JSON.parse(localStorage.getItem('storedSearches'))
 
@@ -74,7 +70,11 @@ export default {
   },
   methods: {
     async getLocationInfo () {
+      this.loading = true
+
       if (!this.address || !this.address.trim()) {
+        this.loading = false
+        alert("Campo de busca obrigatorio")
         return
       }
 
@@ -88,103 +88,36 @@ export default {
       const storedCoordinate = storedCoordinatesList.find((item) => item.address === this.address)
 
       if (storedCoordinate) {
-        this.getWeatherInfo(storedCoordinate.lat, storedCoordinate.lng)
-        this.getForecastInfo(storedCoordinate.lat, storedCoordinate.lng)
+        this.latitude = storedCoordinate.lat
+        this.longitude = storedCoordinate.lng
       } else {
-        const { results } = await getLocation(this.address)
-        if (results.length === 0) {
+        const response = await getLocation(this.address)
+
+        if (!response.success) {
+          this.loading = false
+          alert(response.error)
+          return
+        }
+
+        if (response.data.results.length === 0) {
+          this.loading = false
           alert('Não encontrado')
           return
         }
 
         const geocode = {
           "address": this.address,
-          "lat": results[0].geometry.location.lat,
-          "lng": results[0].geometry.location.lng
+          "lat": response.data.results[0].geometry.location.lat,
+          "lng": response.data.results[0].geometry.location.lng
         }
 
         storedCoordinatesList.push(geocode)
         localStorage.setItem('storedCoordinatesList', JSON.stringify(storedCoordinatesList))
 
-        this.getWeatherInfo(results[0].geometry.location.lat,results[0].geometry.location.lng)
-        this.getForecastInfo(results[0].geometry.location.lat,results[0].geometry.location.lng)
+        this.latitude = response.data.results[0].geometry.location.lat
+        this.longitude = response.data.results[0].geometry.location.lng
       }
-    },
-    async getWeatherInfo (lat, lng) {
-      const currentDateHour = this.getCurrentDateTime()
-      this.currentDate = currentDateHour.currentDate
-
-      const storedWeathersList = JSON.parse(sessionStorage.getItem('storedWeathersList')) ? JSON.parse(sessionStorage.getItem('storedWeathersList')) : []
-
-      const storedWeather = storedWeathersList.find((item) => item.lastQuery === currentDateHour.currentHour && item.lat === lat && item.lng === lng)
-
-      if (storedWeather) {
-        this.location = storedWeather.location
-        this.temperature = storedWeather.temperature
-        this.weather = storedWeather.weather
-      } else {
-        const data = await getWeather(lat,lng)
-        this.location = data.name
-        this.temperature = Math.round(data.main.temp)
-        this.weather = data.weather[0].description
-
-        const weatherInfo = {
-          "lastQuery": currentDateHour.currentHour,
-          "lat": lat,
-          "lng": lng,
-          "location": data.name,
-          "temperature": Math.round(data.main.temp),
-          "weather": data.weather[0].description,
-        }
-
-        storedWeathersList.push(weatherInfo)
-        sessionStorage.setItem('storedWeathersList', JSON.stringify(storedWeathersList))
-      }
-    },
-    async getForecastInfo(lat, lng) {
-      const currentDateHour = this.getCurrentDateTime()
-      const storedForecastsList = JSON.parse(sessionStorage.getItem('storedForecastsList')) ? JSON.parse(sessionStorage.getItem('storedForecastsList')) : []
-
-      const storedForecast = storedForecastsList.find((item) => item.lastQuery === currentDateHour.currentHour && item.lat === lat && item.lng === lng)
-      if (storedForecast) {
-        this.forecast = storedForecast.forecast
-        return
-      }
-
-      const data = await getForecast(lat, lng)
-
-      const forecastList = data.list.filter(element => {
-        return DateTime.fromISO(new Date(element.dt_txt).toISOString()).hour === 12 // weather at 12h
-      })
-
-      const forecast = forecastList.map((item, idx) => {
-        return {
-          id: idx,
-          date: DateTime.fromISO(new Date(item.dt_txt).toISOString()).toFormat('dd/MM'),
-          weather: item.weather[0].description,
-          temperature: Math.round(item.main.temp)
-        }
-      })
-
-      this.forecast = forecast
-
-      const forecastInfo = {
-        "lastQuery": currentDateHour.currentHour,
-        "lat": lat,
-        "lng": lng,
-        "forecast": forecast
-      }
-
-      storedForecastsList.push(forecastInfo)
-      sessionStorage.setItem('storedForecastsList', JSON.stringify(storedForecastsList))
-    },
-    getCurrentDateTime() {
-      const dt = DateTime.now();
-
-      return {
-        currentDate: dt.toFormat('dd/MM'),
-        currentHour: dt.toFormat('dd/MM/YYYY - HH')
-      }
+      this.loading = false
     },
     setAddress(address) {
       this.address = address

@@ -1,14 +1,15 @@
 <template>
   <v-combobox
-    ref="searchCombobox"
-    v-model="dummyAddress"
     @change="onAutoCompleteSelection"
     @keyup="customOnChangeHandler"
     @paste="customOnChangeHandler"
+    color="#1e1559"
+    :disabled="loading"
     :items="comboboxItems"
     label="Digite um local"
-    color="#1e1559"
     outlined
+    ref="searchCombobox"
+    v-model="dummyAddress"
   ></v-combobox>
 </template>
 <script>
@@ -20,6 +21,10 @@ export default {
   props: {
     comboboxItems: {
       type: Array,
+      required: true
+    },
+    loading: {
+      type: Boolean,
       required: true
     }
   },
