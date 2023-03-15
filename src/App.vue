@@ -25,6 +25,7 @@
                 @click="getLocationInfo"
                 class="btn-search"
                 color="#1e1559"
+                :disabled="!this.address || !this.address.trim()"
                 elevation="2"
                 :loading="loading"
                 outlined
@@ -81,12 +82,6 @@ export default {
   methods: {
     async getLocationInfo () {
       this.loading = true
-
-      if (!this.address || !this.address.trim()) {
-        this.loading = false
-        alert("Campo de busca obrigatorio")
-        return
-      }
 
       if (!this.items.includes(this.address)) {
         this.items.push(this.address)
