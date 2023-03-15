@@ -14,7 +14,7 @@
     <v-row v-else class="mb-10" no-gutters>
       <v-col cols="12">
         <div>
-          <span class="fs-100 block text-center"><b> {{ temperature ? `${temperature}°C` : '--' }} </b></span>
+          <span class="fs-100 block text-center"><b> {{ temperature !== null ? `${temperature}°C` : '--' }} </b></span>
           <span class="fs-25 block text-center"><b> {{ weather }} </b></span>
           <span class="fs-25 block text-center"> {{ location }} </span>
           <span class="fs-25 block text-center"> {{ currentDate }} </span>
