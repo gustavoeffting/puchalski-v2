@@ -1,6 +1,14 @@
 <template>
   <v-app id="main-content">
     <v-container>
+      <v-snackbar
+        v-model="snackbar"
+        multi-line
+        top
+        color="red"
+      >
+        {{ snackbarText }}
+      </v-snackbar>
       <v-row :class="[latitude && longitude ? '' : 'home']" align="center" no-gutters>
         <v-col>
           <v-row v-if="!latitude || !longitude" no-gutters>
@@ -55,6 +63,8 @@ export default {
     latitude: null,
     longitude: null,
     loading: false,
+    snackbar: false,
+    snackbarText: null
   }),
   computed: {
     coordinates() {
@@ -95,13 +105,15 @@ export default {
 
         if (!response.success) {
           this.loading = false
-          alert(response.error)
+          this.snackbarText = "Erro ao buscar localização. Tente novamente mais tarde."
+          this.snackbar = true
           return
         }
 
         if (response.data.results.length === 0) {
           this.loading = false
-          alert('Não encontrado')
+          this.snackbarText = "Localização não encontrada."
+          this.snackbar = true
           return
         }
 

@@ -1,5 +1,13 @@
 <template>
   <v-container>
+    <v-snackbar
+      v-model="snackbar"
+      multi-line
+      top
+      color="red"
+    >
+      Erro ao buscar previsão. Tente novamente mais tarde.
+    </v-snackbar>
     <v-row>
       <v-col cols="12">
         <v-row class="backblur" no-gutters>
@@ -29,7 +37,8 @@ export default {
   name: "ForecastTable",
   data: () => ({
     forecast: [],
-    loading: false
+    loading: false,
+    snackbar: false,
   }),
   props: {
     coordinates: {
@@ -65,7 +74,7 @@ export default {
 
       if (!response.success) {
         this.loading = false
-        alert(response.error)
+        this.snackbar = true
         return
       }
 

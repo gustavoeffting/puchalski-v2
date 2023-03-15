@@ -1,12 +1,20 @@
 <template>
   <v-container>
+    <v-snackbar
+      v-model="snackbar"
+      multi-line
+      top
+      color="red"
+    >
+      Erro ao buscar clima. Tente novamente mais tarde.
+    </v-snackbar>
     <v-row v-if="loading" justify="center">
       <v-progress-circular color="#1e1559" indeterminate :size="100" />
     </v-row>
     <v-row v-else class="mb-10" no-gutters>
       <v-col cols="12">
         <div>
-          <span class="fs-100 block text-center"><b> {{ temperature }}°C </b></span>
+          <span class="fs-100 block text-center"><b> {{ temperature ? `${temperature}°C` : '--' }} </b></span>
           <span class="fs-25 block text-center"><b> {{ weather }} </b></span>
           <span class="fs-25 block text-center"> {{ location }} </span>
           <span class="fs-25 block text-center"> {{ currentDate }} </span>
@@ -25,6 +33,7 @@ export default {
     currentDate: null,
     loading: false,
     location: null,
+    snackbar: false,
     temperature: null,
     weather: null
   }),
@@ -64,7 +73,7 @@ export default {
 
         if (!response.success) {
           this.loading = false
-          alert(response.error)
+          this.snackbar = true
           return
         }
 
