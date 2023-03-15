@@ -1,9 +1,7 @@
 <template>
   <v-container>
-    <v-row v-if="loading">
-      <v-col cols="12">
-        <h2>CARREGANDO...spinner WeatherInfo</h2>
-      </v-col>
+    <v-row v-if="loading" justify="center">
+      <v-progress-circular color="#1e1559" indeterminate :size="100" />
     </v-row>
     <v-row v-else class="mb-10" no-gutters>
       <v-col cols="12">

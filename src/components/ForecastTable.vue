@@ -1,10 +1,5 @@
 <template>
   <v-container>
-    <v-row v-if="loading">
-      <v-col cols="12">
-        <h2>CARREGANDO...spinner ForecastTable</h2>
-      </v-col>
-    </v-row>
     <v-row>
       <v-col cols="12">
         <v-row class="backblur" no-gutters>
@@ -12,7 +7,10 @@
             <span class="fs-20 block text-center">Previsão</span>
           </v-col>
         </v-row>
-        <v-row v-for="item in forecast" :key="item.id" align="center" class="backblur" no-gutters>
+        <v-row v-if="loading" class="mt-5" justify="center">
+          <v-progress-circular color="#1e1559" indeterminate :size="100" />
+        </v-row>
+        <v-row v-else v-for="item in forecast" :key="item.id" align="center" class="backblur" no-gutters>
           <v-col cols="6">
             <span class="fs-30 block text-center"> {{ item.date }} </span>
           </v-col>
